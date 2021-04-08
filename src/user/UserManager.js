@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import { v4 as uuidv4 } from 'uuid';
 import genHash from '../util/genHash';
 import mongodb from 'mongodb';
+import User from './User';
 
 const MONGO_URL = 'mongodb://localhost:27017'; // todo: hardcode
 const MONGO_DB_NAME = 'micro-cdn';
@@ -32,15 +33,23 @@ class UserManager {
   };
 
   #setListeners = () => {
-    /*this._expressApp.post('/signUp', (req, res) => {
+    this._expressApp.post('/signUp', (req, res) => {
       const userData = req.body.userData;
 
       const uuid = uuidv4();
       const name = userData.name;
       const email = userData.email;
       const hash = genHash(name + email);
-      const isActive = false;
-    });*/
+      const isActivate = false;
+
+      const user = new User(uuid, name, email, hash, isActivate);
+
+      this.tryPushToStorage(user).then((result) =>
+        result
+          ? res.status(200).send(result._name)
+          : res.status(422).send('user already sign up')
+      );
+    });
 
     // out signal intercept
     process.on('exit', (_) => this._mongoClient.close());
@@ -50,13 +59,9 @@ class UserManager {
     process.on('uncaughtException', (_) => this._mongoClient.close());
   };
 
-  isAlreadySignUp(email) {
-    // bool
-  }
-
   tryPushToStorage(user) {
     // (User) => void
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.tryFetchFromStorage(user).then((maybeUser) =>
         maybeUser
           ? resolve(null)
