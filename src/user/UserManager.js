@@ -15,13 +15,14 @@ const MONGO_DB_NAME = 'micro-cdn';
 class UserManager {
   _expressApp; // core.Express
   _config; // BaseConfig
-  _mongoClient; // MongoCleint
+  _mongoClient; // MongoClient
 
   constructor(expressApp = express(), config = new ConfigBase()) {
     this._expressApp = expressApp;
     this._config = config;
 
     this.#setSettings();
+    this.#setListeners();
   }
 
   #setSettings = () => {
@@ -31,7 +32,7 @@ class UserManager {
   };
 
   #setListeners = () => {
-    this._expressApp.post('/signUp', (req, res) => {
+    /*this._expressApp.post('/signUp', (req, res) => {
       const userData = req.body.userData;
 
       const uuid = uuidv4();
@@ -39,54 +40,69 @@ class UserManager {
       const email = userData.email;
       const hash = genHash(name + email);
       const isActive = false;
-    });
+    });*/
+
+    // out signal intercept
+    process.on('exit', (_) => this._mongoClient.close());
+    process.on('SIGINT', (_) => this._mongoClient.close());
+    process.on('SIGUSR1', (_) => this._mongoClient.close());
+    process.on('SIGUSR2', (_) => this._mongoClient.close());
+    process.on('uncaughtException', (_) => this._mongoClient.close());
   };
 
   isAlreadySignUp(email) {
     // bool
   }
 
-  async tryPushToStorage(user) {
+  tryPushToStorage(user) {
     // (User) => void
-    return this.tryFetchFromStorage(user);
+    return new Promise((resolve, reject) => {
+      this.tryFetchFromStorage(user).then((maybeUser) =>
+        maybeUser
+          ? resolve(null)
+          : this.pushToStorage(user, (result) => resolve(result))
+      );
+    });
   }
 
-  pushToStorage(user) {
+  pushToStorage(user, cb = null) {
     // (User) => Object
     if (user === null) return;
 
     this._mongoClient.connect((err) => {
-      console.log(err);
-
       const db = this._mongoClient.db(MONGO_DB_NAME);
       const usersCollection = db.collection('users');
+
       usersCollection.insertMany([user], (err, res) => {
         if (err != null) console.log(err);
-        console.log(res);
+        const user = res.ops[0];
+        if (cb != null) cb(user);
       });
-
-      this._mongoClient.close();
     });
   }
 
-  async tryFetchFromStorage(user) {
-    // (User) => User?
-    let rres = null;
-    rres = await this._mongoClient.connect((err) => {
-      console.log(err);
+  tryFetchFromStorage(user) {
+    // (User) => Promise(User?)
+    return new Promise((resolve) =>
+      this._mongoClient.connect(
+        this.#searchUser.bind(this, user, (maybeUser) => resolve(maybeUser))
+      )
+    );
+  }
 
-      const db = this._mongoClient.db(MONGO_DB_NAME);
-      const usersCollection = db.collection('users');
+  static #getUserFromCollection(userCollection, email) {
+    // (Object) => User
+    return userCollection.findOne({ _email: email });
+  }
 
-      usersCollection.find({ _email: user.getEmail() }).toArray((err, res) => {
-        rres = res;
-        /*if (res.length === 0 ) return null;
-          return res;*/
-      });
-      this._mongoClient.close();
-    });
+  #searchUser(user, cb) {
+    const db = this._mongoClient.db(MONGO_DB_NAME);
+    const userCollection = db.collection('users');
 
-    return rres;
+    const email = user.getEmail();
+    const maybeUser = UserManager.#getUserFromCollection(userCollection, email);
+
+    cb(maybeUser);
   }
 }
 
