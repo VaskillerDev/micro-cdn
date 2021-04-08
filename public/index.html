@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <title>Title</title>
+    <script>
+      window.onload = () => {
+        let form = document.forms[0]; // todo: hardcode
+        form.attachEvent
+          ? form.attachEvent('submit', onUpload)
+          : form.addEventListener('submit', onUpload);
+      };
+
+      function onUpload(event) {
+        event.preventDefault();
+        const OK = 200;
+        const data = new FormData(event.target);
+        const req = new XMLHttpRequest();
+        const file = data.entries().next().value[1]; // FormData[0].value
+
+        if (file == null) return; // guard
+
+        req.open('POST', '/upload', true);
+        req.onload = (ev) =>
+          req.status === OK
+            ? sendNotification(file, ev.target.response)
+            : console.log('Error');
+        req.send(data);
+      }
+
+      function sendNotification(file, response) {
+        console.log(response); // response code
+
+        const userData = {
+          // todo: hardcode
+          name: 'MyName',
+          email: 'rmservicemailer@gmail.com',
+          hash: '31232321312312',
+        };
+
+        let { name, size, type } = file;
+
+        const fileData = {
+          name: name,
+          size: size,
+          type: type,
+        };
+
+        const bodyObject = {
+          userData: userData,
+          fileData: fileData,
+        };
+
+        fetch('/sendNotification', {
+          method: 'POST',
+          body: JSON.stringify(bodyObject),
+          headers: {
+            'Content-type': 'application/json;charset=UTF-8',
+          },
+        }).catch((err) => console.log(err));
+
+        //console.log(response);
+      }
+    </script>
+  </head>
+  <body>
+    <form
+      onsubmit="onUpload"
+      rel="uploadForm"
+      id="uploadForm"
+      method="post"
+      enctype="multipart/form-data"
+    >
+      <input type="file" name="uploadedFile" />
+      <br />
+      <label>
+        code:
+        <input type="text" name="uploadedCipher" />
+      </label>
+      <br />
+      <input type="submit" value="Upload!" />
+    </form>
+  </body>
+</html>

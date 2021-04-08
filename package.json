@@ -1,0 +1,23 @@
+{
+  "name": "nano-cdn",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --experimental-modules --es-module-specifier-resolution=node app.js",
+    "create-user": "node ./test/create-user.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^7.4.2",
+    "body-parser": "^1.19.0",
+    "busboy": "^0.3.1",
+    "express": "^4.17.1",
+    "mongodb": "^3.6.6",
+    "uuid": "^8.3.2",
+    "validator": "^13.5.2"
+  }
+}

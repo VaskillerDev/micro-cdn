@@ -1,0 +1,10 @@
+# ide
+/.idea
+
+# dev
+/node_modules
+/config/config.prod.js
+
+# upload
+/upload
+
