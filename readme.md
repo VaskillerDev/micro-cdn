@@ -19,7 +19,7 @@ USE_MAIL=true SENDGRID_API_KEY="key" SENDER_EMAIL="youremail" node --experimenta
 VFS_ROOT_PATH - root for cdn uploading
 
 // static
-ROOT_STATIC_FILES
+ROOT_STATIC_FILES - direcory for serve static files
 
 // mail
 USE_MAIL - use mail notification
