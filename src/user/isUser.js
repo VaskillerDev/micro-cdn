@@ -12,8 +12,6 @@ export default (maybeUser) => {
   if (!isUUID(maybeUuid)) return false;
 
   const maybeName = maybeUser['_name'];
-  let isString = typeof maybeName == 'string' || maybeUser instanceof String;
-  if (!isString) return false;
   if (isEmpty(maybeName)) return false;
 
   const maybeEmail = maybeUser['_email'];
