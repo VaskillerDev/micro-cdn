@@ -8,13 +8,13 @@ let apiKey;
  * @param toEmail {string}
  * @param fileName {string}
  */
-export default (config,toEmail, fileName) => {
+export default (config, toEmail, fileName) => {
   if (!config.USE_MAIL) return false;
   if (apiKey === null) {
     apiKey = config.SENDGRID_API_KEY;
     sendgrid.setApiKey(apiKey);
   }
-  
+
   const mail = {
     from: config.SENDER_EMAIL,
     to: toEmail,
