@@ -3,10 +3,9 @@ import isUser from '../src/user/isUser';
 import User from '../src/user/User';
 import { v4 as uuidv4 } from 'uuid';
 import * as assert from 'assert';
-import VfsFile from '../src/vfs/VfsFile';
 import express from 'express';
-import VfsManager from '../src/vfs/VfsManager';
 import UserManager from '../src/user/UserManager';
+import config from '../config';
 
 {
   const uuid = uuidv4();
@@ -19,24 +18,13 @@ import UserManager from '../src/user/UserManager';
 
   assert.strictEqual(isUser(user), true);
 
-  let file = new VfsFile();
-
-  /* file._isDirectory = false;
-    file._ownerUuid = uuid;
-    file._nativeFile = fs.readFileSync("./myAwesomeTestFile.txt");*/
-  //let _ = file._nativeFile;
+  config.printAll();
+  console.log('NODE_ENV:', process.env.NODE_ENV);
 
   const expressApp = express();
+  const userManager = new UserManager(expressApp, config);
 
-  let vfsManager = new VfsManager(expressApp);
-  let userManager = new UserManager(expressApp);
-
-  userManager.tryPushToStorage(user).then((r) => console.log(r));
-
-  //expressApp.set('port', 3000);
   expressApp.listen(3000);
-
-  //upload(expressApp(), user, file);
 }
 
 {
