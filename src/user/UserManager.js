@@ -7,8 +7,8 @@ import mongodb from 'mongodb';
 import User from './User';
 import isUser from './isUser';
 
-const USER_ALREADY_SIGNUP = { userData: null, message: 'user already sign up' };
-const USER_SIGNIN_FAILED = { userData: null, message: 'sign in is failed' };
+const USER_ALREADY_SIGNUP = { token: null, message: 'user already sign up' };
+const USER_SIGNIN_FAILED = { token: null, message: 'sign in is failed' };
 
 /**
  * @property {e.Express} this._expressApp
@@ -53,9 +53,11 @@ class UserManager {
 
       if (!isUser(user)) res.status(422).send({});
 
-      this.tryPushToStorage(user).then(result =>
-        result
-          ? res.status(200).send({ userData: user, message: 'sign up is done' })
+      this.tryPushToStorage(user).then(maybeUser =>
+        maybeUser
+          ? res
+              .status(200)
+              .send({ token: maybeUser.toJwtSync(), message: 'sign up is done' })
           : res.status(422).send(USER_ALREADY_SIGNUP)
       );
     });
@@ -73,11 +75,13 @@ class UserManager {
 
       const user = new User(null, name, email, null, false);
 
-      this.tryFetchFromStorage(user, this.#searchUser).then(user =>
-        user
-          ? res.status(200).send({ userData: user, message: 'sign in is done' })
-          : res.status(422).send(USER_SIGNIN_FAILED)
-      );
+      this.tryFetchFromStorage(user, this.#searchUser)
+        .then(maybeUser => User.createFromObject(maybeUser)?.toJwtSync())
+        .then(maybeToken =>
+          maybeToken
+            ? res.status(200).send({ token: maybeToken, message: 'sign in is done' })
+            : res.status(422).send(USER_SIGNIN_FAILED)
+        );
     });
   };
 
@@ -89,6 +93,22 @@ class UserManager {
         maybeUser ? resolve(null) : this.pushToStorage(user, result => resolve(result))
       )
     );
+  }
+
+  #searchUser(user, cb) {
+    const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
+    const userCollection = db.collection('users');
+
+    const email = user.getEmail();
+    const name = user.getName();
+    let maybeUser = UserManager.#getUserFromCollection(userCollection, name, email);
+
+    cb(maybeUser);
+  }
+
+  static #getUserFromCollection(userCollection, name, email) {
+    // (Object) => User
+    return userCollection.findOne({ _email: email, _name: name });
   }
 
   pushToStorage(user, cb = null) {
@@ -111,30 +131,12 @@ class UserManager {
   tryFetchFromStorage(user, searchFunction) {
     // (User) => Promise(User?)
     this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
-    return new Promise(resolve =>{
-          this._mongoClient.connect(
-              searchFunction.bind(this, user, maybeUser => resolve(maybeUser))
-          )
+    return new Promise(resolve => {
+      this._mongoClient.connect(
+        searchFunction.bind(this, user, maybeUser => resolve(maybeUser))
+      );
       this._mongoClient.close();
-    }
-      
-    );
-  }
-
-  static #getUserFromCollection(userCollection, name, email) {
-    // (Object) => User
-    return userCollection.findOne({ _email: email, _name: name });
-  }
-
-  #searchUser(user, cb) {
-    const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
-    const userCollection = db.collection('users');
-
-    const email = user.getEmail();
-    const name = user.getName();
-    const maybeUser = UserManager.#getUserFromCollection(userCollection, name, email);
-
-    cb(maybeUser);
+    });
   }
 }
 
