@@ -23,6 +23,10 @@ class User {
     return this._email;
   }
 
+  getName() {
+    return this._name;
+  }
+
   static createFromObject(object) {
     // User?
     if (!isUser(object)) return null;

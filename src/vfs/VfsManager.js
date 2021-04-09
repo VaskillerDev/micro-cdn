@@ -60,7 +60,7 @@ class VfsManager {
         const wStream = fs.createWriteStream(pathToUploadFile);
         const fileUuid = uuidv4();
 
-        file.on('data', (chunk) => {
+        file.on('data', chunk => {
           currentFileSize += chunk.length;
           //let per = (currentFileSize / totalFileSize) * 100;
           // console.log("progress: " + per + "/ 100");

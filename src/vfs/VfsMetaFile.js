@@ -47,7 +47,7 @@ class VfsMetaFile {
     };
     const metaString = JSON.stringify(meta);
 
-    fs.writeFile(pathToFile, metaString, (err) => console.log(err));
+    fs.writeFile(pathToFile, metaString, err => console.log(err));
   }
 }
 

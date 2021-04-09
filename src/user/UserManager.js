@@ -5,9 +5,13 @@ import { v4 as uuidv4 } from 'uuid';
 import genHash from '../util/genHash';
 import mongodb from 'mongodb';
 import User from './User';
+import isUser from './isUser';
 
 const MONGO_URL = 'mongodb://localhost:27017'; // todo: hardcode
 const MONGO_DB_NAME = 'micro-cdn';
+
+const USER_ALREADY_SIGNUP = { userData: null, message: 'user already sign up' };
+const USER_SIGNIN_FAILED = { userData: null, message: 'sign in is failed' };
 
 /**
  * @property {e.Express} this._expressApp
@@ -33,6 +37,12 @@ class UserManager {
   };
 
   #setListeners = () => {
+    /* {
+      "userData": {
+      "name": "MyName",
+      "email": "myemail@mail.com"
+        }
+    } */
     this._expressApp.post('/signUp', (req, res) => {
       const userData = req.body.userData;
 
@@ -44,41 +54,62 @@ class UserManager {
 
       const user = new User(uuid, name, email, hash, isActivate);
 
-      this.tryPushToStorage(user).then((result) =>
+      if (!isUser(user)) res.status(422).send({});
+
+      this.tryPushToStorage(user).then(result =>
         result
-          ? res.status(200).send(result._name)
-          : res.status(422).send('user already sign up')
+          ? res.status(200).send({ userData: user, message: 'sign up is done' })
+          : res.status(422).send(USER_ALREADY_SIGNUP)
+      );
+    });
+
+    /* {
+      "userData": {
+      "name": "MyName",
+      "email": "myemail@mail.com"
+        }
+    } */
+    this._expressApp.post('/signIn', (req, res) => {
+      const userData = req.body.userData;
+      const name = userData.name;
+      const email = userData.email;
+
+      const user = new User(null, name, email, null, false);
+
+      this.tryFetchFromStorage(user, this.#searchUser).then(user =>
+        user
+          ? res.status(200).send({ userData: user, message: 'sign in is done' })
+          : res.status(422).send(USER_SIGNIN_FAILED)
       );
     });
 
     // out signal intercept
-    process.on('exit', (_) => this._mongoClient.close());
-    process.on('SIGINT', (_) => this._mongoClient.close());
-    process.on('SIGUSR1', (_) => this._mongoClient.close());
-    process.on('SIGUSR2', (_) => this._mongoClient.close());
-    process.on('uncaughtException', (_) => this._mongoClient.close());
+    process.on('exit', _ => this._mongoClient.close());
+    process.on('SIGINT', _ => this._mongoClient.close());
+    process.on('SIGUSR1', _ => this._mongoClient.close());
+    process.on('SIGUSR2', _ => this._mongoClient.close());
+    process.on('uncaughtException', _ => this._mongoClient.close());
   };
 
+  // trying push data if cell in collection is free
   tryPushToStorage(user) {
     // (User) => void
-    return new Promise((resolve) => {
-      this.tryFetchFromStorage(user).then((maybeUser) =>
-        maybeUser
-          ? resolve(null)
-          : this.pushToStorage(user, (result) => resolve(result))
-      );
-    });
+    return new Promise(resolve =>
+      this.tryFetchFromStorage(user, this.#searchUser).then(maybeUser =>
+        maybeUser ? resolve(null) : this.pushToStorage(user, result => resolve(result))
+      )
+    );
   }
 
   pushToStorage(user, cb = null) {
     // (User) => Object
     if (user === null) return;
 
-    this._mongoClient.connect((err) => {
+    this._mongoClient.connect(err => {
       const db = this._mongoClient.db(MONGO_DB_NAME);
       const usersCollection = db.collection('users');
 
-      usersCollection.insertMany([user], (err, res) => {
+      usersCollection.insertOne(user, (err, res) => {
         if (err != null) console.log(err);
         const user = res.ops[0];
         if (cb != null) cb(user);
@@ -86,18 +117,18 @@ class UserManager {
     });
   }
 
-  tryFetchFromStorage(user) {
+  tryFetchFromStorage(user, searchFunction) {
     // (User) => Promise(User?)
-    return new Promise((resolve) =>
+    return new Promise(resolve =>
       this._mongoClient.connect(
-        this.#searchUser.bind(this, user, (maybeUser) => resolve(maybeUser))
+        searchFunction.bind(this, user, maybeUser => resolve(maybeUser))
       )
     );
   }
 
-  static #getUserFromCollection(userCollection, email) {
+  static #getUserFromCollection(userCollection, name, email) {
     // (Object) => User
-    return userCollection.findOne({ _email: email });
+    return userCollection.findOne({ _email: email, _name: name });
   }
 
   #searchUser(user, cb) {
@@ -105,7 +136,8 @@ class UserManager {
     const userCollection = db.collection('users');
 
     const email = user.getEmail();
-    const maybeUser = UserManager.#getUserFromCollection(userCollection, email);
+    const name = user.getName();
+    const maybeUser = UserManager.#getUserFromCollection(userCollection, name, email);
 
     cb(maybeUser);
   }
