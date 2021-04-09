@@ -79,13 +79,6 @@ class UserManager {
           : res.status(422).send(USER_SIGNIN_FAILED)
       );
     });
-
-    // out signal intercept
-    process.on('exit', _ => this._mongoClient.close());
-    process.on('SIGINT', _ => this._mongoClient.close());
-    process.on('SIGUSR1', _ => this._mongoClient.close());
-    process.on('SIGUSR2', _ => this._mongoClient.close());
-    process.on('uncaughtException', _ => this._mongoClient.close());
   };
 
   // trying push data if cell in collection is free
@@ -101,7 +94,7 @@ class UserManager {
   pushToStorage(user, cb = null) {
     // (User) => Object
     if (user === null) return;
-
+    this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
     this._mongoClient.connect(err => {
       const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
       const usersCollection = db.collection('users');
@@ -111,15 +104,20 @@ class UserManager {
         const user = res.ops[0];
         if (cb != null) cb(user);
       });
+      this._mongoClient.close();
     });
   }
 
   tryFetchFromStorage(user, searchFunction) {
     // (User) => Promise(User?)
-    return new Promise(resolve =>
-      this._mongoClient.connect(
-        searchFunction.bind(this, user, maybeUser => resolve(maybeUser))
-      )
+    this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
+    return new Promise(resolve =>{
+          this._mongoClient.connect(
+              searchFunction.bind(this, user, maybeUser => resolve(maybeUser))
+          )
+      this._mongoClient.close();
+    }
+      
     );
   }
 
