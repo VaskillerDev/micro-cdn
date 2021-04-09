@@ -125,9 +125,14 @@ class VfsManager {
       const fileData = req.body.fileData;
       const fileName = fileData.name;
 
-      sendMail(this._config, userData.email, fileName, `Your file: ${fileName} has been upload`);
+      sendMail(
+        this._config,
+        userData.email,
+        fileName,
+        `Your file: ${fileName} has been upload`
+      );
     });
-    
+
     /*
     https://mysite/download/3fbb1a78-b569-40af-8acc-1d8ab8b8aa34/789012
     */
