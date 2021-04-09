@@ -74,8 +74,9 @@ class UserManager {
       const email = userData.email;
 
       const user = new User(null, name, email, null, false);
+      const filter = { _name: name, _email: email };
 
-      this.tryFetchFromStorage(user, this.#searchUser)
+      this.tryFetchFromStorage(user, filter, this.#searchUser)
         .then(maybeUser => User.createFromObject(maybeUser)?.toJwtSync())
         .then(maybeToken =>
           maybeToken
@@ -88,27 +89,27 @@ class UserManager {
   // trying push data if cell in collection is free
   tryPushToStorage(user) {
     // (User) => void
+    const email = user.getEmail();
+    const filter = { _email: email };
+
     return new Promise(resolve =>
-      this.tryFetchFromStorage(user, this.#searchUser).then(maybeUser =>
+      this.tryFetchFromStorage(user, filter, this.#searchUser).then(maybeUser =>
         maybeUser ? resolve(null) : this.pushToStorage(user, result => resolve(result))
       )
     );
   }
-
-  #searchUser(user, cb) {
+  
+  #searchUser(user, filter, cb) {
     const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
     const userCollection = db.collection('users');
 
-    const email = user.getEmail();
-    const name = user.getName();
-    let maybeUser = UserManager.#getUserFromCollection(userCollection, name, email);
-
+    let maybeUser = UserManager.#getUserFromCollection(userCollection, filter);
     cb(maybeUser);
   }
 
-  static #getUserFromCollection(userCollection, name, email) {
+  static #getUserFromCollection(userCollection, filter) {
     // (Object) => User
-    return userCollection.findOne({ _email: email, _name: name });
+    return userCollection.findOne(filter);
   }
 
   pushToStorage(user, cb = null) {
@@ -128,12 +129,12 @@ class UserManager {
     });
   }
 
-  tryFetchFromStorage(user, searchFunction) {
+  tryFetchFromStorage(user, filter, searchFunction) {
     // (User) => Promise(User?)
     this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
     return new Promise(resolve => {
       this._mongoClient.connect(
-        searchFunction.bind(this, user, maybeUser => resolve(maybeUser))
+        searchFunction.bind(this, user, filter, maybeUser => resolve(maybeUser))
       );
       this._mongoClient.close();
     });

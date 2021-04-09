@@ -8,22 +8,24 @@ import isUUID from 'validator/es/lib/isUUID.js';
 export default maybeUser => {
   // bool
 
-  const maybeUuid = maybeUser['_uuid'];
+  if (maybeUser == null) return false;
+
+  const maybeUuid = maybeUser?._uuid;
   if (!isUUID(maybeUuid)) return false;
 
-  const maybeName = maybeUser['_name'];
+  const maybeName = maybeUser?._name;
   if (isEmpty(maybeName)) return false;
 
-  const maybeEmail = maybeUser['_email'];
+  const maybeEmail = maybeUser?._email;
   if (!isEmail(maybeEmail)) return false;
 
-  const maybeHash = maybeUser['_hash'];
+  const maybeHash = maybeUser?._hash;
   if (!isHash(maybeHash, 'sha256')) return false;
 
   /*const maybeJwt = maybeUser["_jwt"];
     if (!isJWT(maybeJwt)) return false;*/
 
-  const maybeIsActivate = maybeUser['_isActivate'].toString();
+  const maybeIsActivate = maybeUser?._isActivate?.toString();
   if (!isBoolean(maybeIsActivate)) return false;
 
   return true;
