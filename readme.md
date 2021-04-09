@@ -20,9 +20,11 @@ INIT_VECTOR - (required) initialization vector for encryption data
 
 // vfs
 VFS_ROOT_PATH - root for cdn uploading
+ROOT_STATIC_FILES - directory for serve static files
 
-// static
-ROOT_STATIC_FILES - direcory for serve static files
+//mongo
+MONGO_URL - adress to mongod instance server
+MONGO_DB_NAME - name of mongo database
 
 // mail
 USE_MAIL - use mail notification

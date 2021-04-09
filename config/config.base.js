@@ -10,6 +10,10 @@ class ConfigBase {
   VFS_ROOT_PATH = process.env.VFS_ROOT_PATH || './upload';
   ROOT_STATIC_FILES = process.env.ROOT_STATIC_FILES || __dirname + path.sep + ".." + path.sep + 'public';
 
+  //mongo
+  MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017';
+  MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'micro-cdn';
+  
   // mail
   SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
   USE_MAIL = process.env.USE_MAIL || false;

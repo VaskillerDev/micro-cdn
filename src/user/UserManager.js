@@ -7,9 +7,6 @@ import mongodb from 'mongodb';
 import User from './User';
 import isUser from './isUser';
 
-const MONGO_URL = 'mongodb://localhost:27017'; // todo: hardcode
-const MONGO_DB_NAME = 'micro-cdn';
-
 const USER_ALREADY_SIGNUP = { userData: null, message: 'user already sign up' };
 const USER_SIGNIN_FAILED = { userData: null, message: 'sign in is failed' };
 
@@ -33,7 +30,7 @@ class UserManager {
   #setSettings = () => {
     this._expressApp.use(bodyParser.urlencoded({ extended: false }));
     this._expressApp.use(bodyParser.json());
-    this._mongoClient = new mongodb.MongoClient(MONGO_URL);
+    this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
   };
 
   #setListeners = () => {
@@ -106,7 +103,7 @@ class UserManager {
     if (user === null) return;
 
     this._mongoClient.connect(err => {
-      const db = this._mongoClient.db(MONGO_DB_NAME);
+      const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
       const usersCollection = db.collection('users');
 
       usersCollection.insertOne(user, (err, res) => {
@@ -132,7 +129,7 @@ class UserManager {
   }
 
   #searchUser(user, cb) {
-    const db = this._mongoClient.db(MONGO_DB_NAME);
+    const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
     const userCollection = db.collection('users');
 
     const email = user.getEmail();
