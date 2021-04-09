@@ -45,6 +45,11 @@ class VfsManager {
     this._expressApp.use('/main', express.static(DIR)); // static file
     this._expressApp.use('/', express.static(DIR)); // static file
 
+    /*
+    Content-Type:  multipart/form-data
+    uploadedFile: file,
+    uploadedCipher: text
+     */
     this._expressApp.post('/upload', (req, res) => {
       // uploading
       const busboy = new Busboy({ headers: req.headers });
@@ -108,12 +113,23 @@ class VfsManager {
       req.pipe(busboy);
     });
 
+    /* {
+      "userData": {
+      "name": "MyName",
+      "email": "myemail@mail.com"
+        }
+      "fileData": {
+      "name": "myvideo.mp4"
+      "size": 154675
+      "type": "video/mp4"
+      }
+    } */
     this._expressApp.post('/sendNotification', (req, res) => {
       const userData = req.body.userData;
       const fileData = req.body.fileData;
       const fileName = fileData.name;
 
-      sendMail(userData.email, fileName);
+      sendMail(this._config, userData.email, fileName);
     });
 
     /*this._expressApp.get('/checkStatus/:filename', (req, res) => {
@@ -123,6 +139,9 @@ class VfsManager {
             //console.log(per);
      });*/
 
+    /*
+    https://mysite/download/3fbb1a78-b569-40af-8acc-1d8ab8b8aa34/789012
+    */
     this._expressApp.get('/download/:key/:code', (req, res) => {
       const key = req.params['key'];
       const code = req.params['code'];
