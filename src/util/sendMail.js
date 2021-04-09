@@ -23,5 +23,5 @@ export default (config, toEmail, fileName) => {
     text: `Your file: ${fileName} has been upload`,
   };
 
-  sendgrid.send(mail).catch((err) => console.log(err));
+  sendgrid.send(mail).catch(err => console.log(err));
 };

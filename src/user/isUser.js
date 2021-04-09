@@ -5,7 +5,7 @@ import isJWT from 'validator/es/lib/isJWT.js';
 import isBoolean from 'validator/es/lib/isBoolean.js';
 import isUUID from 'validator/es/lib/isUUID.js';
 
-export default (maybeUser) => {
+export default maybeUser => {
   // bool
 
   const maybeUuid = maybeUser['_uuid'];
