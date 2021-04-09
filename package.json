@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node --experimental-modules --es-module-specifier-resolution=node app.js",
+    "start": "INIT_VECTOR='6sQHveRFexVpmRQG' NODE_ENV='dev' node --experimental-modules --es-module-specifier-resolution=node app.js",
     "create-user": "node ./test/create-user.test.js"
   },
   "keywords": [],

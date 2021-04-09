@@ -7,7 +7,7 @@ npm start
 ```
 or
 ```sh
-node --experimental-modules --es-module-specifier-resolution=node app.js
+INIT_VECTOR='6sQHveRFexVpmRQG' NODE_ENV='dev' node --experimental-modules --es-module-specifier-resolution=node app.js
 ```
 using sendgrid email:
 ```sh
@@ -15,6 +15,9 @@ USE_MAIL=true SENDGRID_API_KEY="key" SENDER_EMAIL="youremail" node --experimenta
 ```
 ## Vars:
 ```sh
+NODE_ENV - "prod" || "dev" || "base"
+INIT_VECTOR - (required) initialization vector for encryption data
+
 // vfs
 VFS_ROOT_PATH - root for cdn uploading
 
