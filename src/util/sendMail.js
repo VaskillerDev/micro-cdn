@@ -8,7 +8,7 @@ let apiKey;
  * @param toEmail {string}
  * @param fileName {string}
  */
-export default (config, toEmail, fileName) => {
+export default (config, toEmail, fileName, text) => {
   if (!config.USE_MAIL) return false;
   if (apiKey === null) {
     apiKey = config.SENDGRID_API_KEY;
@@ -20,7 +20,7 @@ export default (config, toEmail, fileName) => {
     to: toEmail,
 
     subject: 'Notification by microCDN',
-    text: `Your file: ${fileName} has been upload`,
+    text: text,
   };
 
   sendgrid.send(mail).catch(err => console.log(err));
