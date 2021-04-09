@@ -11,7 +11,7 @@ INIT_VECTOR='6sQHveRFexVpmRQG' NODE_ENV='dev' node --experimental-modules --es-m
 ```
 using sendgrid email:
 ```sh
-USE_MAIL=true SENDGRID_API_KEY="key" SENDER_EMAIL="youremail" node --experimental-modules --es-module-specifier-resolution=node app.js
+INIT_VECTOR='6sQHveRFexVpmRQG' NODE_ENV='dev' USE_MAIL=true SENDGRID_API_KEY="key" SENDER_EMAIL="youremail" node --experimental-modules --es-module-specifier-resolution=node app.js
 ```
 ## Vars:
 ```sh
