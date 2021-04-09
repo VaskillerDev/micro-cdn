@@ -6,7 +6,7 @@ import * as assert from 'assert';
 import express from 'express';
 import UserManager from '../src/user/UserManager';
 import config from '../config';
-import VfsManager from "../src/vfs/VfsManager";
+import VfsManager from '../src/vfs/VfsManager';
 
 {
   const uuid = uuidv4();
