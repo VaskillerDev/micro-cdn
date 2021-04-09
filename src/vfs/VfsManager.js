@@ -14,10 +14,6 @@ import trimExt from '../util/trimExt';
 import getCipher from '../util/getCipher';
 import getDecipher from '../util/getDecipher';
 
-const __dirname = path.resolve();
-const DIR = __dirname + '/../public';
-const UPLOAD_DIR = __dirname + '/../upload';
-
 /**
  * @property {e.Express} this._expressApp
  * @property {ConfigBase} this._config
@@ -42,8 +38,8 @@ class VfsManager {
   #setListeners = () => {
     let uploadMap = new Map(); // storage <uuidFile : string as UUID, vfsFile: VfsFile>
 
-    this._expressApp.use('/main', express.static(DIR)); // static file
-    this._expressApp.use('/', express.static(DIR)); // static file
+    this._expressApp.use('/main', express.static(this._config.ROOT_STATIC_FILES)); // static file
+    this._expressApp.use('/', express.static(this._config.ROOT_STATIC_FILES)); // static file
 
     /*
     Content-Type:  multipart/form-data
@@ -119,10 +115,10 @@ class VfsManager {
       "email": "myemail@mail.com"
         }
       "fileData": {
-      "name": "myvideo.mp4"
+      "name": "my_video.mp4"
       "size": 154675
       "type": "video/mp4"
-      }
+        }
     } */
     this._expressApp.post('/sendNotification', (req, res) => {
       const userData = req.body.userData;
@@ -131,14 +127,7 @@ class VfsManager {
 
       sendMail(this._config, userData.email, fileName);
     });
-
-    /*this._expressApp.get('/checkStatus/:filename', (req, res) => {
-            const fileName = req.params["fileName"];
-            const pathToUploadFile = this._config.VFS_ROOT_PATH + "/" + fileName;
-            
-            //console.log(per);
-     });*/
-
+    
     /*
     https://mysite/download/3fbb1a78-b569-40af-8acc-1d8ab8b8aa34/789012
     */

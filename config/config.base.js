@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 class ConfigBase {
   // vfs
   VFS_ROOT_PATH = process.env.VFS_ROOT_PATH || './upload';
-  ROOT_STATIC_FILES = process.env.ROOT_STATIC_FILES || __dirname + path.sep + 'public';
+  ROOT_STATIC_FILES = process.env.ROOT_STATIC_FILES || __dirname + path.sep + ".." + path.sep + 'public';
 
   // mail
   SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;

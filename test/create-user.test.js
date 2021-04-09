@@ -6,6 +6,7 @@ import * as assert from 'assert';
 import express from 'express';
 import UserManager from '../src/user/UserManager';
 import config from '../config';
+import VfsManager from "../src/vfs/VfsManager";
 
 {
   const uuid = uuidv4();
@@ -22,6 +23,7 @@ import config from '../config';
   console.log('NODE_ENV:', process.env.NODE_ENV);
 
   const expressApp = express();
+  const vfsManager = new VfsManager(expressApp, config);
   const userManager = new UserManager(expressApp, config);
 
   expressApp.listen(3000);

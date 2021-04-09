@@ -14,17 +14,6 @@ console.log(process.env.NODE_ENV);
 
 const expressApp = express();
 const userManager = new UserManager(expressApp, config);
-// const vfsManager = new VfsManager(expressApp, config);
-
-const uuid = uuidv4();
-const name = 'MyAwesomeUser';
-const email = 'myawesomeUser@email.com';
-const hash = genHash(name + email);
-const isActivate = false;
-
-//const user = new User(uuid, name, email, hash, isActivate);
-//userManager.pushToStorage(user);
-//userManager.tryFetchFromStorage(user).then((res) => console.log(res));
-//userManager.tryPushToStorage(user).then((o) => console.log(o));
+const vfsManager = new VfsManager(expressApp, config);
 
 expressApp.listen(3000);
