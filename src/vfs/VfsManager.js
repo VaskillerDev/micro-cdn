@@ -13,6 +13,12 @@ import VfsMetaFile from './VfsMetaFile';
 import trimExt from '../util/trimExt';
 import getCipher from '../util/getCipher';
 import getDecipher from '../util/getDecipher';
+import extractJwtPayload from '../util/extractJwtPayload';
+import mongodb from 'mongodb';
+
+const FILE_NOT_FOUND = { message: 'file not found' };
+const FILE_UPLOAD_ALREADY = { message: 'file is already uploaded' };
+const TARGET_COLLECTION = 'files';
 
 /**
  * @property {e.Express} this._expressApp
@@ -21,13 +27,16 @@ import getDecipher from '../util/getDecipher';
 class VfsManager {
   _expressApp; // core.Express
   _config; // BaseConfig
+  _mongoClient; // MongoClient
+  _verifyMiddleware = (req, res, next) => {
+    next();
+  }; // ( func : (req,res,next) => {} ) => void
 
   constructor(expressApp = express(), config = new ConfigBase()) {
     this._expressApp = expressApp;
     this._config = config;
 
     this.#setSettings();
-    this.#setListeners();
   }
 
   #setSettings = () => {
@@ -35,7 +44,7 @@ class VfsManager {
     this._expressApp.use(bodyParser.json());
   };
 
-  #setListeners = () => {
+  listen = () => {
     let uploadMap = new Map(); // storage <uuidFile : string as UUID, vfsFile: VfsFile>
 
     this._expressApp.use('/main', express.static(this._config.ROOT_STATIC_FILES)); // static file
@@ -72,8 +81,6 @@ class VfsManager {
         file.pipe(gzip).pipe(wStream);
 
         busboy.on('finish', () => {
-          res.status(200).send(fileUuid); // response uuid-file-code
-
           const metaFile = new VfsMetaFile(
             fileName,
             totalFileSize,
@@ -96,8 +103,38 @@ class VfsManager {
           rStream.pipe(cipher).pipe(wStream);
           wStream.on('finish', () => fs.unlink(pathToUploadFile, this.logError));
 
-          const vfsFile = new VfsFile(null, pathToUploadFile, metaFile); // todo: hardcode
-          uploadMap.set(fileUuid, vfsFile);
+          const vfsFile = new VfsFile(null, pathToUploadFileGzEnc, metaFile); // todo: hardcode
+          uploadMap.set(fileUuid, vfsFile); // todo: rm later
+
+          // jwt logic
+          const jwt = req.headers['authorization'];
+          const payload = extractJwtPayload(jwt);
+          const { email } = payload;
+          if (email === null) return;
+          this.sendNotification(email, fileName, `File ${fileName} has been uploaded`);
+
+          // mongo logic
+          this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
+          this._mongoClient.connect(err => {
+            if (err != null) this.logError(err);
+            const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
+            const fileCollection = db.collection(TARGET_COLLECTION);
+
+            fileCollection.findOne({ _path: vfsFile.getPath() }).then(maybeFile => {
+              if (maybeFile != null) {
+                res.status(402).send(FILE_UPLOAD_ALREADY);
+                this._mongoClient.close();
+                return;
+              }
+
+              fileCollection.insertOne({
+                _path: vfsFile.getPath(),
+                _vfsMetaFile: vfsFile.getVfsMetaFile(),
+              });
+              this._mongoClient.close();
+              res.status(200).send(fileUuid); // response uuid-file-code
+            });
+          });
         });
       };
 
@@ -109,34 +146,10 @@ class VfsManager {
       req.pipe(busboy);
     });
 
-    /* {
-      "userData": {
-      "name": "MyName",
-      "email": "myemail@mail.com"
-        }
-      "fileData": {
-      "name": "my_video.mp4"
-      "size": 154675
-      "type": "video/mp4"
-        }
-    } */
-    this._expressApp.post('/sendNotification', (req, res) => {
-      const userData = req.body.userData;
-      const fileData = req.body.fileData;
-      const fileName = fileData.name;
-
-      sendMail(
-        this._config,
-        userData.email,
-        fileName,
-        `Your file: ${fileName} has been upload`
-      );
-    });
-
     /*
     https://mysite/download/3fbb1a78-b569-40af-8acc-1d8ab8b8aa34/789012
     */
-    this._expressApp.get('/download/:key/:code', (req, res) => {
+    this._expressApp.get('/download/:key/:code', this._verifyMiddleware, (req, res) => {
       const key = req.params['key'];
       const code = req.params['code'];
 
@@ -144,7 +157,10 @@ class VfsManager {
       if (code == null) return;
 
       const maybeVfsFile = this.getVfsFile(uploadMap, key, code);
-      if (maybeVfsFile == null) return;
+      if (maybeVfsFile == null) {
+        res.status(404).send(FILE_NOT_FOUND);
+        return;
+      }
       const vfsFile = maybeVfsFile;
 
       const pathToFileGz = vfsFile.getPath();
@@ -160,29 +176,58 @@ class VfsManager {
       const decipher = getDecipher(code);
 
       rStream.pipe(decipher).pipe(gunzip).pipe(res);
+
+      const jwt = req.headers['authorization'];
+      const payload = extractJwtPayload(jwt);
+      const { email } = payload;
+      if (email === null) return;
+      this.sendNotification(email, fileName, `File ${fileName} has been download`);
     });
 
-    this._expressApp.delete('/delete/:key/:code', (req, res) => {
-      const key = req.params['key'];
-      const code = req.params['code'];
+    this._expressApp.delete(
+      '/delete/:key/:code',
+      this._verifyMiddleware,
+      (req, res) => {
+        const key = req.params['key'];
+        const code = req.params['code'];
 
-      const maybeVfsFile = this.getVfsFile(uploadMap, key, code);
-      if (maybeVfsFile == null) return;
+        const maybeVfsFile = this.getVfsFile(uploadMap, key, code);
+        if (maybeVfsFile == null) {
+          res.status(404).send(FILE_NOT_FOUND);
+          return;
+        }
 
-      const vfsFile = maybeVfsFile;
-      const pathToFileGz = vfsFile.getPath();
-      const pathToMetaFile = vfsFile.getPathToMetaFile();
+        const vfsFile = maybeVfsFile;
+        const pathToFileGzEnc = vfsFile.getPath();
+        const pathToMetaFile = vfsFile.getPathToMetaFile();
 
-      fs.unlink(pathToFileGz, this.logError);
-      fs.unlink(pathToMetaFile, this.logError);
+        fs.unlink(pathToFileGzEnc, this.logError);
+        fs.unlink(pathToMetaFile, this.logError);
 
-      res.status(200).send();
-    });
+        res.status(200).send();
+
+        const fileName = trimExt(path.basename(pathToFileGzEnc));
+        const jwt = req.headers['authorization'];
+        const payload = extractJwtPayload(jwt);
+        const { email } = payload;
+        if (email === null) return;
+        this.sendNotification(email, fileName, `File ${fileName} has been deleted`);
+      }
+    );
   };
+
+  setVerifyMiddleware(middleware) {
+    this._verifyMiddleware = middleware;
+  }
+
+  sendNotification(email, fileName, text) {
+    sendMail(this._config, email, fileName, `Your file: ${fileName} has been upload`);
+  }
 
   getVfsFile(storage, key, code) {
     // (Map, string, string) => VfsFile?
     const vfsFile = storage.get(key);
+    if (vfsFile === null || vfsFile === undefined) return null;
     const vfsMetaFile = vfsFile.getVfsMetaFile();
     const cipherCode = vfsMetaFile.getCipherCode();
 
