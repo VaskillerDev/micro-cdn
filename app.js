@@ -20,4 +20,10 @@ const expressApp = express();
 const userManager = new UserManager(expressApp, config);
 const vfsManager = new VfsManager(expressApp, config);
 
+const verifyMiddleware = userManager.getVerifyMiddleware();
+vfsManager.setVerifyMiddleware(verifyMiddleware);
+
+userManager.listen();
+vfsManager.listen();
+
 expressApp.listen(3000);
