@@ -10,7 +10,7 @@ let apiKey;
  */
 export default (config, toEmail, fileName, text) => {
   if (!config.USE_MAIL) return false;
-  if (apiKey === null) {
+  if (apiKey === null || apiKey === undefined) {
     apiKey = config.SENDGRID_API_KEY;
     sendgrid.setApiKey(apiKey);
   }
