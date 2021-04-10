@@ -16,7 +16,7 @@ class VfsFile {
   }
 
   getPathToMetaFile() {
-    return trimExt(this.#_pathToFile) + '.meta.json';
+    return trimExt(trimExt(this.#_pathToFile)) + '.meta.json'; // my_file.gz.enc => my_file.meta.json
   }
 
   getVfsMetaFile() {
