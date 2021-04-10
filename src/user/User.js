@@ -1,14 +1,15 @@
 ﻿'use strict';
 
 import isUser from './isUser';
-import getCipher from '../util/getCipher';
+import Base64ToObject from '../util/Base64ToObject';
+import getHmac from '../util/getHmac';
+import Utf8ToBase64Url from '../util/Utf8ToBase64Url';
 
 class User {
   _uuid; // string as UUID
   _name; // string
   _email; // string as Email
   _hash; // string as Hash (sha256) by _name + _email, for example
-  //_jwt; // string as JWT
   _isActivate; // bool
 
   constructor(uuid, name, email, hash, isActivate) {
@@ -16,7 +17,6 @@ class User {
     this._name = name;
     this._email = email;
     this._hash = hash;
-    // this._jwt = jwt;
     this._isActivate = isActivate;
   }
 
@@ -30,6 +30,10 @@ class User {
 
   getUuid() {
     return this._uuid;
+  }
+
+  getHash() {
+    return this._hash;
   }
 
   static createFromObject(object) {
@@ -60,7 +64,7 @@ class User {
   }
 
   makeJwt() {
-    const header = { alg: 'aes-256-cbc', typ: 'JWT' };
+    const header = { alg: 'sha256', typ: 'JWT' };
     const payload = {
       name: this._name,
       email: this._email,
@@ -68,12 +72,13 @@ class User {
       exp: 10 * 60, // as sec, must be >= 5 min
     };
 
-    const headerEncode = Buffer.from(JSON.stringify(header)).toString('base64');
-    const payloadEncode = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const headerEncode = Utf8ToBase64Url(JSON.stringify(header));
+    const payloadEncode = Utf8ToBase64Url(JSON.stringify(payload));
     const rawToken = headerEncode + '.' + payloadEncode;
 
-    const cipher = getCipher(this._hash);
-    const secretEncode = cipher.update(rawToken, 'base64', 'base64');
+    const hmac = getHmac(this._hash);
+    let secretEncode = hmac.update(rawToken).digest('hex');
+    secretEncode = Utf8ToBase64Url(secretEncode);
 
     return rawToken + '.' + secretEncode;
   }
@@ -84,10 +89,7 @@ class User {
       const [headerEncode, payloadEncode, secretEncode] = jwt.split('.');
 
       if (!!headerEncode && !!payloadEncode && !!secretEncode === false) resolve(null);
-
-      // const header = User.#Base64ToObject(headerEncode);
-      const payload = User.#Base64ToObject(payloadEncode);
-      // const secret = secretEncode;
+      const payload = Base64ToObject(payloadEncode);
 
       const name = payload['name'];
       const email = payload['email'];
@@ -101,9 +103,22 @@ class User {
     });
   }
 
-  static #Base64ToObject(str) {
-    const text = Buffer.from(str, 'base64').toString('utf-8');
-    return JSON.parse(text);
+  static createFromJwtSync(jwt) {
+    // (string as JWT) => Promise(User?)
+    const [headerEncode, payloadEncode, secretEncode] = jwt.split('.');
+
+    if (!!headerEncode && !!payloadEncode && !!secretEncode === false) return null;
+    const payload = Base64ToObject(payloadEncode);
+
+    const name = payload['name'];
+    const email = payload['email'];
+    const uuid = payload['uuid'];
+
+    const user = new User(uuid, name, email, null, false);
+
+    if (!!uuid && !!name && !!email === false) return null;
+
+    return user;
   }
 }
 
