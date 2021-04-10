@@ -1,7 +1,6 @@
 ﻿import isEmpty from 'validator/es/lib/isEmpty.js';
 import isEmail from 'validator/es/lib/isEmail.js';
 import isHash from 'validator/es/lib/isHash.js';
-import isJWT from 'validator/es/lib/isJWT.js';
 import isBoolean from 'validator/es/lib/isBoolean.js';
 import isUUID from 'validator/es/lib/isUUID.js';
 
@@ -21,9 +20,6 @@ export default maybeUser => {
 
   const maybeHash = maybeUser?._hash;
   if (!isHash(maybeHash, 'sha256')) return false;
-
-  /*const maybeJwt = maybeUser["_jwt"];
-    if (!isJWT(maybeJwt)) return false;*/
 
   const maybeIsActivate = maybeUser?._isActivate?.toString();
   if (!isBoolean(maybeIsActivate)) return false;
