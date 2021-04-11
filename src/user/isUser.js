@@ -1,10 +1,4 @@
-﻿import isEmpty from 'validator/es/lib/isEmpty.js';
-import isEmail from 'validator/es/lib/isEmail.js';
-import isHash from 'validator/es/lib/isHash.js';
-import isBoolean from 'validator/es/lib/isBoolean.js';
-import isUUID from 'validator/es/lib/isUUID.js';
-
-export default maybeUser => {
+﻿export default maybeUser => {
   // bool
 
   if (maybeUser == null) return false;
@@ -30,3 +24,51 @@ export default maybeUser => {
 
   return true;
 };
+
+
+const uuid = {
+  3: /^[0-9A-F]{8}-[0-9A-F]{4}-3[0-9A-F]{3}-[0-9A-F]{4}-[0-9A-F]{12}$/i,
+  4: /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+  5: /^[0-9A-F]{8}-[0-9A-F]{4}-5[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i,
+  all: /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i,
+};
+
+function isUUID (str, version = 'all') {
+  const pattern = uuid[version];
+  return pattern && pattern.test(str);
+}
+
+function isEmpty(str, options) {
+  options = {ignore_whitespace: false};
+
+  return (options.ignore_whitespace ? str.trim().length : str.length) === 0;
+}
+
+function isEmail(email) { 
+  return /^.+@.+\..+$/.test(email); 
+}
+
+const lengths = {
+  md5: 32,
+  md4: 32,
+  sha1: 40,
+  sha256: 64,
+  sha384: 96,
+  sha512: 128,
+  ripemd128: 32,
+  ripemd160: 40,
+  tiger128: 32,
+  tiger160: 40,
+  tiger192: 48,
+  crc32: 8,
+  crc32b: 8,
+};
+
+function isHash(str, algorithm) {
+  const hash = new RegExp(`^[a-fA-F0-9]{${lengths[algorithm]}}$`);
+  return hash.test(str);
+}
+
+function isBoolean(str) {
+  return (['true', 'false', '1', '0'].indexOf(str) >= 0);
+}
