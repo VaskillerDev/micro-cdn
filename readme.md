@@ -13,6 +13,14 @@ using sendgrid email:
 ```sh
 INIT_VECTOR='6sQHveRFexVpmRQG' NODE_ENV='dev' USE_MAIL=true SENDGRID_API_KEY="key" SENDER_EMAIL="youremail" node --experimental-modules --es-module-specifier-resolution=node app.js
 ```
+for test:
+```
+npm run test
+```
+or
+```
+node --experimental-modules --es-module-specifier-resolution=node tests.js
+```
 ## Vars:
 ```sh
 NODE_ENV - "prod" || "dev" || "base"
