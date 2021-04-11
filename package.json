@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "INIT_VECTOR='6sQHveRFexVpmRQG' NODE_ENV='dev' node --experimental-modules --es-module-specifier-resolution=node app.js",
-    "create-user": "node ./test/create-user.test.js"
+    "test": "node --experimental-modules --es-module-specifier-resolution=node tests.js"
   },
   "keywords": [],
   "author": "",
