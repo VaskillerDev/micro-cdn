@@ -1,7 +1,7 @@
 ﻿# MicroCDN
 Small cdn for demonstration.
 
-## Usage:
+## Exec:
 ```sh
 npm start
 ```
@@ -38,6 +38,41 @@ MONGO_DB_NAME - name of mongo database
 USE_MAIL - use mail notification
 SENDGRID_API_KEY - sendgrid api key
 SENDER_EMAIL - email sender
+```
 
+## Usage
+```
+# Sign Up
+curl --location --request POST 'localhost:3000/signup' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "userData": {
+        "name": "ExampleUser",
+        "email": "exampleMail@mail.com"
+    }
+}'
 
+# Sign In
+curl --location --request POST 'localhost:3000/signin' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "userData": {
+        "name": "ExampleUser",
+        "email": "exampleMail@mail.com"
+    }
+}'
+
+# Upload File
+curl --location --request POST 'localhost:3000/upload' \
+--header 'Authorization: YourJwtToken' \
+--form 'uploadedFile=@"/path/to/file"' \
+--form 'uploadedCipher="YourCode"'
+
+# Download file
+curl --location --request GET 'localhost:3000/download/file-uuid/code' \
+--header 'Authorization: YourJwtToken'
+
+# Delete file
+curl --location --request DELETE 'http://localhost:3000/delete/file-uuid/code' \
+--header 'Authorization: YourJwtToken'
 ```
