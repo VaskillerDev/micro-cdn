@@ -163,14 +163,13 @@ class VfsManager {
       }
       const vfsFile = maybeVfsFile;
 
-      const pathToFileGz = vfsFile.getPath();
+      const pathToFileGzEnc = vfsFile.getPath();
       const fileName = vfsFile.getVfsMetaFile().getFileName();
 
       res.status(200);
       res.set('Content-Type', 'application/octet-stream');
       res.set('Content-Disposition', 'attachment; filename=' + fileName);
-
-      const pathToFileGzEnc = pathToFileGz + '.enc';
+      
       const rStream = fs.createReadStream(pathToFileGzEnc);
       const gunzip = zlib.createGunzip();
       const decipher = getDecipher(code);
@@ -206,12 +205,24 @@ class VfsManager {
 
         res.status(200).send();
 
+        // jwt logic
         const fileName = trimExt(path.basename(pathToFileGzEnc));
         const jwt = req.headers['authorization'];
         const payload = extractJwtPayload(jwt);
         const { email } = payload;
         if (email === null) return;
         this.sendNotification(email, fileName, `File ${fileName} has been deleted`);
+        
+        // mongo logic
+        this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
+        this._mongoClient.connect(err => {
+          if (err != null) this.logError(err);
+          const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
+          const fileCollection = db.collection(TARGET_COLLECTION);
+          
+          fileCollection.deleteOne({ _path: vfsFile.getPath()});
+          this._mongoClient.close();
+        });
       }
     );
   };
@@ -221,7 +232,7 @@ class VfsManager {
   }
 
   sendNotification(email, fileName, text) {
-    sendMail(this._config, email, fileName, `Your file: ${fileName} has been upload`);
+    sendMail(this._config, email, fileName, text);
   }
 
   getVfsFile(storage, key, code) {
@@ -237,7 +248,7 @@ class VfsManager {
   }
 
   logError(err) {
-    console.log(err);
+    if (err !== null) console.log(err);
   }
 }
 
