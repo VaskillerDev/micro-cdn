@@ -248,7 +248,7 @@ class VfsManager {
   }
 
   logError(err) {
-    if (err !== null) console.log(err);
+    if (err !== null) console.error(err);
   }
 }
 

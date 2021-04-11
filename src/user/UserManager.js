@@ -147,7 +147,7 @@ class UserManager {
             next();
           } else res.status(401).send(USER_UNAUTHORIZED);
         })
-        .catch(err => console.log(err));
+        .catch(err => this.logError(err));
     };
   }
 
@@ -182,12 +182,12 @@ class UserManager {
     if (user === null) return;
     this._mongoClient = new mongodb.MongoClient(this._config.MONGO_URL);
     this._mongoClient.connect(err => {
-      if (err != null) console.log(err);
+      if (err != null) this.logError(err);
       const db = this._mongoClient.db(this._config.MONGO_DB_NAME);
       const usersCollection = db.collection(TARGET_COLLECTION);
 
       usersCollection.insertOne(user, (err, res) => {
-        if (err != null) console.log(err);
+        if (err != null) this.logError(err);
         const user = res.ops[0];
         if (cb != null) cb(user);
       });
@@ -204,6 +204,10 @@ class UserManager {
       );
       this._mongoClient.close();
     });
+  }
+
+  logError(err) {
+    if (err !== null) console.error(err);
   }
 }
 
