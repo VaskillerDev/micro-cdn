@@ -10,15 +10,19 @@ export default maybeUser => {
   if (maybeUser == null) return false;
 
   const maybeUuid = maybeUser?._uuid;
+  if (maybeUuid == null) return false;
   if (!isUUID(maybeUuid)) return false;
 
   const maybeName = maybeUser?._name;
+  if (maybeName == null) return false;
   if (isEmpty(maybeName)) return false;
 
   const maybeEmail = maybeUser?._email;
+  if (maybeEmail == null) return false;
   if (!isEmail(maybeEmail)) return false;
 
   const maybeHash = maybeUser?._hash;
+  if (maybeHash == null) return false;
   if (!isHash(maybeHash, 'sha256')) return false;
 
   const maybeIsActivate = maybeUser?._isActivate?.toString();
