@@ -29,5 +29,9 @@ vfsManager.setVerifyMiddleware(verifyMiddleware);
 userManager.listen();
 vfsManager.listen();
 
-expressApp.listen(PORT);
+const server = expressApp.listen(PORT);
 console.log(`Listen on ${PORT}`);
+
+process.on('SIGINT', () => server.close());
+process.on('SIGTERM', () => server.close());
+process.on('exit', () => server.close());
