@@ -5,9 +5,6 @@ import express from 'express';
 import config from './config.js';
 import VfsManager from './src/vfs/VfsManager';
 import UserManager from './src/user/UserManager';
-import { v4 as uuidv4 } from 'uuid';
-import genHash from './src/util/genHash';
-import User from './src/user/User';
 import * as fs from "fs";
 
 const PORT = 3000;
