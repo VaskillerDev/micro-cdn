@@ -46,10 +46,7 @@ class VfsManager {
 
   listen = () => {
     let uploadMap = new Map(); // storage <uuidFile : string as UUID, vfsFile: VfsFile>
-
-    this._expressApp.use('/main', express.static(this._config.ROOT_STATIC_FILES)); // static file
-    this._expressApp.use('/', express.static(this._config.ROOT_STATIC_FILES)); // static file
-
+    
     /*
     Content-Type:  multipart/form-data
     uploadedFile: file,
