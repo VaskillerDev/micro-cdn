@@ -89,9 +89,9 @@ class UserManager {
         );
     });
   };
-  /* {
-    "jwt": "eyJhbGci.VzZXIiLCJlbWFpbCI6ImV4YW1wbGVNYWlsQG1.7B/c+a/6eVp4WHUMEr"
-   } */
+  /* in header 
+    "Authorization": "eyJhbGci.VzZXIiLCJlbWFpbCI6ImV4YW1wbGVNYWlsQG1.7B/c+a/6eVp4WHUMEr"
+    */
   getVerifyMiddleware() {
     return (req, res, next) => {
       const jwt = req.headers['authorization'];
