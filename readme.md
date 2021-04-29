@@ -1,5 +1,4 @@
 ﻿# MicroCDN
-Small cdn for demonstration.
 
 ## Exec:
 ```sh
